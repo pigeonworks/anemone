@@ -17,6 +17,8 @@ See http://anemone.rubyforge.org for more information.
 * CLI program can list all pages in a domain, calculate page depths, and more
 * Obey robots.txt
 * In-memory or persistent storage of pages during crawl, using TokyoCabinet or PStore
+* Optionally remember external links
+* Optionally follow external links
 
 == Examples
 See the scripts under the <tt>lib/anemone/cli</tt> directory for examples of several useful Anemone tasks.

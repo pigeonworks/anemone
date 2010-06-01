@@ -1,6 +1,7 @@
 require 'nokogiri'
 require 'ostruct'
 require 'webrick/cookie'
+require 'anemone/common'
 
 module Anemone
   class Page
@@ -63,7 +64,8 @@ module Anemone
         u = a.attributes['href'].content rescue nil
         next if u.nil? or u.empty?
         abs = to_absolute(URI(u)) rescue next
-        @links << abs if in_domain?(abs)
+        # remember the link if it's in_domain or if it's external and we're remembering those
+        @links << abs if( in_domain?(abs) or Common.remember_external_links? )
       end
       @links.uniq!
       @links

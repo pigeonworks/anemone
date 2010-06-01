@@ -1,6 +1,6 @@
 spec = Gem::Specification.new do |s|
   s.name = "anemone"
-  s.version = "0.4.0"
+  s.version = "0.4.0.1"
   s.author = "Chris Kite"
   s.homepage = "http://anemone.rubyforge.org"
   s.rubyforge_project = "anemone"
@@ -22,6 +22,7 @@ spec = Gem::Specification.new do |s|
     lib/anemone.rb
     lib/anemone/cookie_store.rb
     lib/anemone/core.rb
+    lib/anemone/common.rb
     lib/anemone/http.rb
     lib/anemone/page.rb
     lib/anemone/page_store.rb

@@ -4,10 +4,11 @@ require 'anemone/tentacle'
 require 'anemone/page'
 require 'anemone/page_store'
 require 'anemone/storage'
+require 'anemone/common'
 
 module Anemone
 
-  VERSION = '0.4.0';
+  VERSION = '0.4.0.1';
 
   #
   # Convenience method to start a crawl
@@ -45,7 +46,11 @@ module Anemone
       # Hash of cookie name => value to send with HTTP requests
       :cookies => nil,
       # accept cookies from the server and send them back?
-      :accept_cookies => false
+      :accept_cookies => false,
+      # remember external links?
+      :remember_external_links => false,
+      # follow external links?
+      :follow_external_links => false
     }
 
     # Create setter methods for all options to be called from the crawl block
@@ -61,6 +66,7 @@ module Anemone
     #
     def initialize(urls, opts = {})
       @urls = [urls].flatten.map{ |url| url.is_a?(URI) ? url : URI(url) }
+      
       @urls.each{ |url| url.path = '/' if url.path.empty? }
 
       @tentacles = []
@@ -69,7 +75,8 @@ module Anemone
       @skip_link_patterns = []
       @after_crawl_blocks = []
       @opts = opts
-
+      
+    
       yield self if block_given?
     end
 
@@ -190,6 +197,9 @@ module Anemone
       @pages = PageStore.new(@opts[:storage] || Anemone::Storage.Hash)
       @robots = Robots.new(@opts[:user_agent]) if @opts[:obey_robots_txt]
 
+      Common.remember_external_links = @opts[:remember_external_links]  || false
+      Common.follow_external_links = @opts[:follow_external_links] || false
+
       freeze_options
     end
 
@@ -241,15 +251,16 @@ module Anemone
     # Returns +false+ otherwise.
     #
     def visit_link?(link, from_page = nil)
-      allowed = @opts[:obey_robots_txt] ? @robots.allowed?(link) : true
-
+      robots_allowed = @opts[:obey_robots_txt] ? @robots.allowed?(link) : true
+      domain_allowed = in_domain?(link) ? true : Common.follow_external_links?  ? true : false
+      
       if from_page && @opts[:depth_limit]
         too_deep = from_page.depth >= @opts[:depth_limit]
       else
         too_deep = false
       end
 
-      !@pages.has_page?(link) && !skip_link?(link) && allowed && !too_deep
+      !@pages.has_page?(link) && !skip_link?(link) && robots_allowed && domain_allowed && !too_deep
     end
 
     #
@@ -258,6 +269,21 @@ module Anemone
     #
     def skip_link?(link)
       @skip_link_patterns.any? { |pattern| link.path =~ pattern }
+    end
+
+    #
+    # Returns +true+ if *uri* is in the same domain as the page, returns
+    # +false+ otherwise
+    #
+    def in_domain?(link)
+      link = link.is_a?(URI) ? link : URI(link)
+      # check against original @urls
+      @urls.each do |url|
+        if link.host == url.host then
+          return true
+        end
+      end
+      return false
     end
 
   end
